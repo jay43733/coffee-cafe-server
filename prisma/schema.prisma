@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  phoneNumber String?  @map("phone_number")
+  createdAt   DateTime @default(now()) @map("created_at")
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  role        Role     @default(USER)
+  orders      Orders[]
+  carts       Cart[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Product {
+  id                 Int              @id @default(autoincrement())
+  name               String
+  image              String
+  description        String?
+  price              Decimal          @db.Decimal(10, 2)
+  createdAt          DateTime         @default(now()) @map("created_at")
+  isRecommended      Boolean          @default(false)
+  product_category   Product_Category @relation(fields: [product_categoryId], references: [id], onDelete: Cascade)
+  product_categoryId Int
+  order_items        Order_items[]
+  carts              Cart[]
+}
+
+model Product_Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  products Product[]
+
+  @@map("product_category")
+}
+
+model Cart {
+  id          Int        @id @default(autoincrement())
+  amount      Int        @default(1)
+  total_price Decimal    @default("0.00") @db.Decimal(10, 2)
+  sweetness   Sweetness?
+  roast       Roast?
+  comment     String?
+  user_id     Int
+  users       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  productId   Int?        @map("product_id")
+  products    Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+enum Sweetness {
+  NOSUGAR @map("0%")
+  S25     @map("25%")
+  S50     @map("50%")
+  S75     @map("75%")
+  S100    @map("100%")
+}
+
+enum Roast {
+  LIGHT
+  MEDIUM
+  DARK
+}
+
+model Order_items {
+  id          Int        @id @default(autoincrement())
+  amount      Int        @default(1)
+  total_price Decimal    @default("0.00") @db.Decimal(10, 2)
+  sweetness   Sweetness?
+  roast       Roast?
+  comment     String?
+  order_id    Int
+  orders      Orders     @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  productId   Int        @map("product_id")
+  products    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Orders {
+  id          Int           @id @default(autoincrement())
+  total_price Decimal       @default("0.00") @db.Decimal(10, 2)
+  status      Status        @default(PENDING)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  paymentUrl  String?
+  userId      Int
+  users       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order_items Order_items[]
+}
+
+enum Status {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
