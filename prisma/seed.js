@@ -1,4 +1,6 @@
-const prisma = require("../config/prisma");
+const bcrypt = require("bcryptjs");
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
 const productData = [
   {
@@ -123,10 +125,32 @@ const productData = [
   },
 ];
 
+const hashedPassword = bcrypt.hashSync("123456", 10);
+
+const userData = [
+  {
+    firstName: "Admin",
+    lastName: "Coffeecafe",
+    role: "ADMIN",
+    email: "admin@gmail.com",
+    password: hashedPassword,
+    phoneNumber: "0812345678",
+  },
+  {
+    firstName: "Test User",
+    lastName: "Coffeecafe",
+    role: "USER",
+    email: "test@gmail.com",
+    password: hashedPassword,
+    phoneNumber: "0812345678",
+  },
+];
+
 console.log("Seed...");
 
 async function run() {
   await prisma.product.createMany({ data: productData });
+  await prisma.user.createMany({ data: userData });
 }
 
 run();
