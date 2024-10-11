@@ -62,16 +62,16 @@ model Cart {
   comment     String?
   user_id     Int
   users       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  productId   Int?        @map("product_id")
-  products    Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   Int?       @map("product_id")
+  products    Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 enum Sweetness {
-  NOSUGAR @map("0%")
-  S25     @map("25%")
-  S50     @map("50%")
-  S75     @map("75%")
-  S100    @map("100%")
+  S0   @map("0%")
+  S25  @map("25%")
+  S50  @map("50%")
+  S75  @map("75%")
+  S100 @map("100%")
 }
 
 enum Roast {
