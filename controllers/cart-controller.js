@@ -25,12 +25,50 @@ exports.addCart = async (req, res, next) => {
   try {
     const { amount, comment, productId, price, roast, sweetness } = req.body;
     const { id } = req.user;
+
+    let checkCart;
+    if (roast) {
+      checkCart = await prisma.cart.findFirst({
+        where: {
+          AND: [
+            { user_id: id },
+            { productId },
+            { sweetness: sweetness },
+            { roast: roast },
+            { comment: comment },
+          ],
+        },
+      });
+    } else{
+      checkCart = await prisma.cart.findFirst({
+        where: {
+          AND: [
+            { user_id: id },
+            { productId },
+            { sweetness: sweetness },
+            { comment: comment },
+          ],
+        },
+      });
+    }
+
+    if (checkCart) {
+      const newOrder = await prisma.cart.update({
+        where: { id: checkCart.id },
+        data: {
+          amount: checkCart.amount + amount,
+        },
+      });
+      res.json({ newOrder });
+      return;
+    }
+
     const data = {
       user_id: id,
       amount,
       comment,
       productId,
-      total_price: price,
+      total_price: price * amount,
       sweetness,
     };
 
@@ -82,6 +120,20 @@ exports.deleteCart = async (req, res, next) => {
       },
     });
     res.json({ delCart });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteAllCart = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const delAllCart = await prisma.cart.deleteMany({
+      where: {
+        user_id: +userId,
+      },
+    });
+    res.json(`${delAllCart.count} items deleted from user ${userId}`);
   } catch (error) {
     next(error);
   }

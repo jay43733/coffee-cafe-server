@@ -33,6 +33,7 @@ module.exports = async (req, res, next) => {
 
     const { password, createdAt, ...userData } = foundUser;
     req.user = userData;
+    console.log(req.user, ".........")
     next()
   } catch (err) {
     next(err);

@@ -81,6 +81,7 @@ exports.login = async (req, res, next) => {
         email: isUserSignedUp.email,
         firstName: isUserSignedUp.firstName,
         lastName: isUserSignedUp.lastName,
+        phoneNumber: isUserSignedUp.phoneNumber,
       },
     };
 
@@ -90,7 +91,7 @@ exports.login = async (req, res, next) => {
     const token = jwt.sign(payload, secret, {
       expiresIn: "30d",
     });
-    console.log(token);
+    // console.log(token);
 
     //Send Token to Front
     res.json({
@@ -105,7 +106,7 @@ exports.login = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const { email, id, firstName, lastName, role } = req.user;
-    console.log(req.user)
+    // console.log(req.user)
     const user = await prisma.user.findFirst({
       where: {
         email,
@@ -120,5 +121,27 @@ exports.getMe = async (req, res, next) => {
     res.json({ user });
   } catch (error) {
     next(error);
+  }
+};
+
+exports.editProfile = async (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const { firstName, lastName, phoneNumber } = req.body;
+    const data = {
+      firstName,
+      lastName,
+      phoneNumber: phoneNumber || null
+    };
+
+    const newProfile = await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: data,
+    });
+    res.json({ newProfile });
+  } catch (err) {
+    next(err);
   }
 };
