@@ -61,7 +61,10 @@ exports.login = async (req, res, next) => {
     if (!isUserSignedUp) {
       return createError(400, "User Invalid");
     }
-    // console.log(isUserSignedUp)
+
+    if(isUserSignedUp.user_status==="INACTIVE"){
+      return createError(400, "Account is banned")
+    }
 
     //Check if password is matched with DB
     const isPasswordMatched = await bcrypt.compareSync(
@@ -69,20 +72,19 @@ exports.login = async (req, res, next) => {
       isUserSignedUp.password
     );
 
-    console.log(isPasswordMatched);
     if (!isPasswordMatched) {
       return createError(400, "User is invalid");
     }
 
+
     //If password is matched ===> Create Payload in Token
     const payload = {
-      user: {
-        id: isUserSignedUp.id,
-        email: isUserSignedUp.email,
-        firstName: isUserSignedUp.firstName,
-        lastName: isUserSignedUp.lastName,
-        phoneNumber: isUserSignedUp.phoneNumber,
-      },
+      id: isUserSignedUp.id,
+      email: isUserSignedUp.email,
+      firstName: isUserSignedUp.firstName,
+      lastName: isUserSignedUp.lastName,
+      phoneNumber: isUserSignedUp.phoneNumber,
+      role: isUserSignedUp.role,
     };
 
     const secret = process.env.SECRET_KEY;
@@ -131,7 +133,7 @@ exports.editProfile = async (req, res, next) => {
     const data = {
       firstName,
       lastName,
-      phoneNumber: phoneNumber || null
+      phoneNumber: phoneNumber || null,
     };
 
     const newProfile = await prisma.user.update({
@@ -145,3 +147,85 @@ exports.editProfile = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getAllUser = async (req, res, next) => {
+  try {
+    const allUser = await prisma.user.findMany({});
+    res.json({ allUser });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.changeRole = async(req,res,next)=>{
+  const { userId } = req.params
+  const {role} = req.body
+  try{
+    const roleUser = await prisma.user.update({
+      where:{
+        id: Number(userId)
+      },
+      data:{
+        role,
+      }
+    })
+    res.json({roleUser})
+  }catch(err){
+    next(err)
+  }
+}
+
+
+exports.deleteUser = async(req,res,next)=>{
+  const {userId} = req.params
+  try{
+    const isAdmin = await prisma.user.findUnique({
+      where: {
+        id : Number(userId)
+      }
+    })
+
+    if(isAdmin.role==="ADMIN"){
+      return createError(400, "Admin accounts cannot be deleted or reactivated.")
+    }
+
+    const delUser = await prisma.user.update({
+      where:{
+        id : Number(userId)
+      },
+      data : {
+       user_status : "INACTIVE" 
+      }
+    })
+    res.json({delUser})
+  }catch(err){
+    next(err)
+  }
+}
+
+exports.activateUser = async(req,res,next)=>{
+  const {userId} = req.params
+  try{
+    const isAdmin = await prisma.user.findUnique({
+      where: {
+        id : Number(userId)
+      }
+    })
+
+    if(isAdmin.role==="ADMIN"){
+      return createError(400, "Admin accounts cannot be deleted or reactivated.")
+    }
+
+    const actUser = await prisma.user.update({
+      where:{
+        id : Number(userId)
+      },
+      data : {
+       user_status : "ACTIVE" 
+      }
+    })
+    res.json({actUser})
+  }catch(err){
+    next(err)
+  }
+}

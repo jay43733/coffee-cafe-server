@@ -131,7 +131,7 @@ const userData = [
   {
     firstName: "Admin",
     lastName: "Coffeecafe",
-    role: "ADMIN",
+    role: "SUPERADMIN",
     email: "admin@gmail.com",
     password: hashedPassword,
     phoneNumber: "0812345678",

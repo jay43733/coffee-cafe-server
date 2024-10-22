@@ -14,14 +14,15 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
+  id          Int        @id @default(autoincrement())
+  email       String     @unique
   password    String
-  phoneNumber String?  @map("phone_number")
-  createdAt   DateTime @default(now()) @map("created_at")
-  firstName   String   @map("first_name")
-  lastName    String   @map("last_name")
-  role        Role     @default(USER)
+  phoneNumber String?    @map("phone_number")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  firstName   String     @map("first_name")
+  lastName    String     @map("last_name")
+  user_status UserStatus @default(ACTIVE)
+  role        Role       @default(USER)
   orders      Orders[]
   carts       Cart[]
 }
@@ -29,16 +30,23 @@ model User {
 enum Role {
   USER
   ADMIN
+  SUPERADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
 }
 
 model Product {
   id                 Int              @id @default(autoincrement())
   name               String
-  image              String
-  description        String?
+  image              String           @db.VarChar(500)
+  description        String?          @db.VarChar(1000)
   price              Decimal          @db.Decimal(10, 2)
   createdAt          DateTime         @default(now()) @map("created_at")
   isRecommended      Boolean          @default(false)
+  product_status     ProductStatus    @default(ACTIVE)
   product_category   Product_Category @relation(fields: [product_categoryId], references: [id], onDelete: Cascade)
   product_categoryId Int
   order_items        Order_items[]
@@ -80,6 +88,11 @@ enum Roast {
   DARK
 }
 
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Order_items {
   id          Int        @id @default(autoincrement())
   amount      Int        @default(1)
@@ -94,15 +107,22 @@ model Order_items {
 }
 
 model Orders {
-  id          Int           @id @default(autoincrement())
-  total_price Decimal       @default("0.00") @db.Decimal(10, 2)
-  status      Status        @default(PENDING)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-  paymentUrl  String?
-  userId      Int
-  users       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order_items Order_items[]
+  id            Int            @id @default(autoincrement())
+  total_price   Decimal        @default("0.00") @db.Decimal(10, 2)
+  status        Status         @default(PENDING)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  paymentUrl    String?
+  paymentMethod PaymentMethod? 
+  userId        Int
+  users         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order_items   Order_items[]
+}
+
+enum PaymentMethod {
+  QRCODE
+  CASH
+  CREDIT
 }
 
 enum Status {

@@ -6,10 +6,10 @@ const fs = require("fs/promises");
 
 exports.addOrder = async (req, res, next) => {
   // req.body.order is a JSON string, so we need to parse it to get the actual object
-  const { carts, totalPrice } = JSON.parse(req.body.order);
+  const { carts, totalPrice} = JSON.parse(req.body.order);
+  const {paymentMethod } = req.body
   const { id } = req.user;
   const haveFile = Boolean(req.file);
-
   try {
     let uploadResult = {};
     if (haveFile) {
@@ -23,6 +23,7 @@ exports.addOrder = async (req, res, next) => {
       data: {
         userId: id,
         total_price: totalPrice,
+        paymentMethod : paymentMethod,
         paymentUrl: uploadResult.secure_url || "",
       },
     });
@@ -56,25 +57,106 @@ exports.getOrder = async (req, res, next) => {
   }
 };
 
+exports.getAllOrder = async (req, res, next) => {
+  try {
+    const allOrder = await prisma.orders.findMany({});
+    // console.log(allOrder);
+    res.json({ allOrder });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getOrderItemByOrderId = async (req, res, next) => {
-  const { id } = req.user;
+  const { id, role } = req.user;
+  // console.log(req.user, "Here");
   const { orderId } = req.params;
   try {
-    const orderItem = await prisma.orders.findUnique({
-      where: {
-        userId: id,
-        id: +orderId,
-      },
-      include: {
-        order_items: {
-          include: {
-            products: true,
+    if (role === "USER") {
+      const orderItem = await prisma.orders.findUnique({
+        where: {
+          userId: id,
+          id: +orderId,
+        },
+        include: {
+          order_items: {
+            include: {
+              products: true,
+            },
           },
         },
+      });
+      res.json({ orderItem });
+    } else {
+      const orderItem = await prisma.orders.findUnique({
+        where: {
+          id: +orderId,
+        },
+        include: {
+          order_items: {
+            include: {
+              products: true,
+            },
+          },
+        },
+      });
+      res.json({ orderItem });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.confirmOrder = async (req, res, next) => {
+  const { orderId } = req.params;
+  try {
+    const selectedOrder = await prisma.orders.findUnique({
+      where: {
+        id: Number(orderId),
       },
     });
-    // console.log(orderItem);
-    res.json({ orderItem });
+    const total_price = selectedOrder.total_price.toNumber();
+
+    if (selectedOrder.status !== "PENDING") {
+      return createError(400, "Status cannot be updated");
+    }
+    const confirmedOrder = await prisma.orders.update({
+      where: {
+        id: Number(orderId),
+      },
+      data: {
+        status: "COMPLETED",
+      },
+    });
+
+    res.json({ confirmedOrder });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.cancelOrder = async (req, res, next) => {
+  const { orderId } = req.params;
+  try {
+    const selectedOrder = await prisma.orders.findUnique({
+      where: {
+        id: Number(orderId),
+      },
+    });
+
+    if (selectedOrder.status !== "PENDING") {
+      return createError(400, "Status cannot be updated");
+    }
+
+    const cancelledOrder = await prisma.orders.update({
+      where: {
+        id: Number(orderId),
+      },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+    res.json({ cancelledOrder });
   } catch (err) {
     next(err);
   }
