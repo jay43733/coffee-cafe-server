@@ -6,8 +6,8 @@ const fs = require("fs/promises");
 
 exports.addOrder = async (req, res, next) => {
   // req.body.order is a JSON string, so we need to parse it to get the actual object
-  const { carts, totalPrice} = JSON.parse(req.body.order);
-  const {paymentMethod } = req.body
+  const { carts, totalPrice } = JSON.parse(req.body.order);
+  const { paymentMethod } = req.body;
   const { id } = req.user;
   const haveFile = Boolean(req.file);
   try {
@@ -23,11 +23,12 @@ exports.addOrder = async (req, res, next) => {
       data: {
         userId: id,
         total_price: totalPrice,
-        paymentMethod : paymentMethod,
+        paymentMethod: paymentMethod || "QRCODE",
         paymentUrl: uploadResult.secure_url || "",
       },
     });
-
+    
+    // console.log(newOrder, "NEW ORDER")
     const rmKeyinCart = carts.map(({ id, user_id, products, ...rest }) => {
       rest.order_id = newOrder.id;
       return rest;
@@ -50,7 +51,6 @@ exports.getOrder = async (req, res, next) => {
         userId: id,
       },
     });
-    // console.log(allOrder);
     res.json({ allOrder });
   } catch (err) {
     next(err);
@@ -60,7 +60,6 @@ exports.getOrder = async (req, res, next) => {
 exports.getAllOrder = async (req, res, next) => {
   try {
     const allOrder = await prisma.orders.findMany({});
-    // console.log(allOrder);
     res.json({ allOrder });
   } catch (err) {
     next(err);
@@ -69,7 +68,6 @@ exports.getAllOrder = async (req, res, next) => {
 
 exports.getOrderItemByOrderId = async (req, res, next) => {
   const { id, role } = req.user;
-  // console.log(req.user, "Here");
   const { orderId } = req.params;
   try {
     if (role === "USER") {
@@ -115,11 +113,12 @@ exports.confirmOrder = async (req, res, next) => {
         id: Number(orderId),
       },
     });
-    const total_price = selectedOrder.total_price.toNumber();
+
 
     if (selectedOrder.status !== "PENDING") {
       return createError(400, "Status cannot be updated");
     }
+    
     const confirmedOrder = await prisma.orders.update({
       where: {
         id: Number(orderId),

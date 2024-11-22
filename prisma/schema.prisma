@@ -25,6 +25,9 @@ model User {
   role        Role       @default(USER)
   orders      Orders[]
   carts       Cart[]
+
+
+  @@map("user")
 }
 
 enum Role {
@@ -51,6 +54,8 @@ model Product {
   product_categoryId Int
   order_items        Order_items[]
   carts              Cart[]
+
+  @@map("product")
 }
 
 model Product_Category {
@@ -72,6 +77,9 @@ model Cart {
   users       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
   productId   Int?       @map("product_id")
   products    Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+
+  @@map("cart")
 }
 
 enum Sweetness {
@@ -104,6 +112,8 @@ model Order_items {
   orders      Orders     @relation(fields: [order_id], references: [id], onDelete: Cascade)
   productId   Int        @map("product_id")
   products    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
 }
 
 model Orders {
@@ -117,6 +127,9 @@ model Orders {
   userId        Int
   users         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   order_items   Order_items[]
+
+
+  @@map("orders")
 }
 
 enum PaymentMethod {

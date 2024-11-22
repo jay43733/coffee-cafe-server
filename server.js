@@ -24,5 +24,5 @@ app.use("/order", orderRoute)
 app.use("*",notFound)
 app.use(errorMiddleware)
 
-const port = process.env.PORT
+const port = process.env.PORT || 8080
 app.listen(port,()=>console.log(`Server is running on ${port}`))

@@ -3,6 +3,8 @@ const prisma = require("../config/prisma");
 const cloudinary = require("../config/cloudinary");
 const path = require("path");
 const fs = require("fs/promises");
+
+
 exports.getProduct = async (req, res, next) => {
   try {
     const allProduct = await prisma.product.findMany({
@@ -45,11 +47,11 @@ exports.addProduct = async (req, res, next) => {
         description: description,
         image: uploadResult.secure_url || "",
         price: price,
-        isRecommended: isRecommended,
+        isRecommended: isRecommended === "true" ? true : false,
         product_categoryId: Number(product_categoryId),
       },
     });
-
+    console.log(newProduct.isRecommended, "NEW PRODUCT");
     res.json({ newProduct });
   } catch (err) {
     next(err);
@@ -115,8 +117,6 @@ exports.updateProduct = async (req, res, next) => {
   const { name, description, price, isRecommended, product_categoryId } =
     req.body;
   const haveFile = Boolean(req.file);
-  const finalIsRecommended = isRecommended === "true" ? true : false;
-  // console.log(finalIsRecommended, "REcommenddd");
   let uploadResult = {};
   try {
     if (haveFile) {
@@ -140,7 +140,6 @@ exports.updateProduct = async (req, res, next) => {
         product_categoryId: Number(product_categoryId),
       },
     });
-    console.log(editProduct.isRecommended, "NEW PRODUCT");
     res.json({ editProduct });
   } catch (error) {
     next(error);

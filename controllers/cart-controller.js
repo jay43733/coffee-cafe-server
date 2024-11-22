@@ -111,7 +111,6 @@ exports.updateCart = async (req, res, next) => {
 exports.deleteCart = async (req, res, next) => {
   try {
     const { cartId } = req.params;
-    console.log(cartId,"CARD ID")
     const delCart = await prisma.cart.delete({
       where: {
         id: Number(cartId),

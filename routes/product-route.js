@@ -4,6 +4,7 @@ const productRoute = express.Router();
 const { getProduct, addProduct, deleteProduct, updateProduct, getAllProduct, reactiveProduct } = require("../controllers/product-controller");
 const upload = require("../middlewares/upload");
 
+//Guest and User will see products that are only active right now.
 productRoute.get("/product", getProduct);
 
 productRoute.get("/product/all", authenticate, getAllProduct);

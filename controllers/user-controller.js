@@ -107,9 +107,9 @@ exports.login = async (req, res, next) => {
 
 exports.getMe = async (req, res, next) => {
   try {
-    const { email, id, firstName, lastName, role } = req.user;
+    const { email } = req.user;
     // console.log(req.user)
-    const user = await prisma.user.findFirst({
+    const user = await prisma.user.findUnique({
       where: {
         email,
       },
@@ -185,7 +185,7 @@ exports.deleteUser = async(req,res,next)=>{
       }
     })
 
-    if(isAdmin.role==="ADMIN"){
+    if(isAdmin.role==="ADMIN" || isAdmin.role === "SUPERADMIN"){
       return createError(400, "Admin accounts cannot be deleted or reactivated.")
     }
 
@@ -212,7 +212,7 @@ exports.activateUser = async(req,res,next)=>{
       }
     })
 
-    if(isAdmin.role==="ADMIN"){
+    if(isAdmin.role==="ADMIN" || isAdmin.role === "SUPERADMIN"){
       return createError(400, "Admin accounts cannot be deleted or reactivated.")
     }
 
