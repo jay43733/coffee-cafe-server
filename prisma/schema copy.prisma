@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,10 +23,22 @@ model User {
   lastName    String     @map("last_name")
   user_status UserStatus @default(ACTIVE)
   role        Role       @default(USER)
-  carts       Cart[]
   orders      Orders[]
+  carts       Cart[]
+
 
   @@map("user")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
 }
 
 model Product {
@@ -32,12 +50,11 @@ model Product {
   createdAt          DateTime         @default(now()) @map("created_at")
   isRecommended      Boolean          @default(false)
   product_status     ProductStatus    @default(ACTIVE)
-  product_categoryId Int
-  carts              Cart[]
-  order_items        Order_items[]
   product_category   Product_Category @relation(fields: [product_categoryId], references: [id], onDelete: Cascade)
+  product_categoryId Int
+  order_items        Order_items[]
+  carts              Cart[]
 
-  @@index([product_categoryId], map: "product_product_categoryId_fkey")
   @@map("product")
 }
 
@@ -52,62 +69,17 @@ model Product_Category {
 model Cart {
   id          Int        @id @default(autoincrement())
   amount      Int        @default(1)
-  total_price Decimal    @default(0.00) @db.Decimal(10, 2)
+  total_price Decimal    @default("0.00") @db.Decimal(10, 2)
   sweetness   Sweetness?
   roast       Roast?
   comment     String?
   user_id     Int
+  users       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
   productId   Int?       @map("product_id")
   products    Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  users       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([productId], map: "cart_product_id_fkey")
-  @@index([user_id], map: "cart_user_id_fkey")
+
   @@map("cart")
-}
-
-model Order_items {
-  id          Int        @id @default(autoincrement())
-  amount      Int        @default(1)
-  total_price Decimal    @default(0.00) @db.Decimal(10, 2)
-  sweetness   Sweetness?
-  roast       Roast?
-  comment     String?
-  order_id    Int
-  productId   Int        @map("product_id")
-  orders      Orders     @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  products    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([order_id], map: "order_items_order_id_fkey")
-  @@index([productId], map: "order_items_product_id_fkey")
-  @@map("order_items")
-}
-
-model Orders {
-  id            Int            @id @default(autoincrement())
-  total_price   Decimal        @default(0.00) @db.Decimal(10, 2)
-  status        Status         @default(PENDING)
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  paymentUrl    String?
-  paymentMethod PaymentMethod?
-  userId        Int
-  order_items   Order_items[]
-  users         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId], map: "orders_userId_fkey")
-  @@map("orders")
-}
-
-enum Role {
-  USER
-  ADMIN
-  SUPERADMIN
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
 }
 
 enum Sweetness {
@@ -127,6 +99,37 @@ enum Roast {
 enum ProductStatus {
   ACTIVE
   INACTIVE
+}
+
+model Order_items {
+  id          Int        @id @default(autoincrement())
+  amount      Int        @default(1)
+  total_price Decimal    @default("0.00") @db.Decimal(10, 2)
+  sweetness   Sweetness?
+  roast       Roast?
+  comment     String?
+  order_id    Int
+  orders      Orders     @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  productId   Int        @map("product_id")
+  products    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+model Orders {
+  id            Int            @id @default(autoincrement())
+  total_price   Decimal        @default("0.00") @db.Decimal(10, 2)
+  status        Status         @default(PENDING)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  paymentUrl    String?
+  paymentMethod PaymentMethod? 
+  userId        Int
+  users         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order_items   Order_items[]
+
+
+  @@map("orders")
 }
 
 enum PaymentMethod {
