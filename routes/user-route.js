@@ -12,6 +12,7 @@ const {
   activateUser,
 } = require("../controllers/user-controller");
 const authenticate = require("../middlewares/authenticate");
+const { payment } = require("../controllers/stripe");
 
 userRoute.post("/login", loginValidate, login);
 
@@ -28,5 +29,7 @@ userRoute.patch("/role/:userId", authenticate,changeRole)
 userRoute.patch("/delete/:userId", authenticate, deleteUser)
 
 userRoute.patch("/activateUser/:userId", authenticate, activateUser)
+
+userRoute.post("/create-payment-intent", authenticate, payment);
 
 module.exports = userRoute;

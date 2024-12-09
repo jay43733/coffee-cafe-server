@@ -9,16 +9,7 @@ exports.addOrder = async (req, res, next) => {
   const { carts, totalPrice } = JSON.parse(req.body.order);
   const { paymentMethod } = req.body;
   const { id } = req.user;
-  const haveFile = Boolean(req.file);
   try {
-    let uploadResult = {};
-    if (haveFile) {
-      uploadResult = await cloudinary.uploader.upload(req.file.path, {
-        overwrite: true,
-        public_id: path.parse(req.file.path).name,
-      });
-      await fs.unlink(req.file.path);
-    }
     const newOrder = await prisma.orders.create({
       data: {
         userId: id,

@@ -11,7 +11,7 @@ const {
 const orderRoute = express.Router();
 const upload = require("../middlewares/upload");
 
-orderRoute.post("/add", authenticate, upload.single("image"), addOrder);
+orderRoute.post("/add", authenticate, addOrder);
 
 orderRoute.get("/getOrder", authenticate, getOrder);
 

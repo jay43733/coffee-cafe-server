@@ -14,8 +14,8 @@ exports.register = async (req, res, next) => {
       password,
       confirmPassword,
     } = req.input;
+    
     //1. Validate through Joi
-
     //2. Check if username is exist
     const isUserExist = await prisma.user.findUnique({
       where: {
@@ -93,7 +93,6 @@ exports.login = async (req, res, next) => {
     const token = jwt.sign(payload, secret, {
       expiresIn: "30d",
     });
-    // console.log(token);
 
     //Send Token to Front
     res.json({
