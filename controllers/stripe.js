@@ -3,9 +3,7 @@ const createError = require("../utils/create-error");
 require("dotenv").config();
 
 // This is your test secret API key.
-const stripe = require("stripe")(
-  "sk_test_51QTyM3JKsFVoUyyZqmnIcDBvNqDqppkVX5lBtKenZ7nXhnzjt35IZ2W6VirzVqSkq70pzeRh4k340M6NvQOU3R0D00wffXFHfq"
-);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 exports.payment = async (req, res, next) => {
   try {
