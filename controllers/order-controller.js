@@ -5,21 +5,33 @@ const createError = require("../utils/create-error");
 const fs = require("fs/promises");
 
 exports.addOrder = async (req, res, next) => {
-  // req.body.order is a JSON string, so we need to parse it to get the actual object
-  const { carts, totalPrice } = JSON.parse(req.body.order);
-  const { paymentMethod } = req.body;
-  const { id } = req.user;
   try {
+    const { carts, totalPrice } = JSON.parse(req.body.order);
+    const { paymentMethod } = req.body;
+    const { id } = req.user;
+    const haveFile = Boolean(req.file);
+
+    // Convert totalPrice to number/decimal if needed
+    const parsedTotalPrice = Number(totalPrice);
+
+    let uploadResult = {};
+    if (haveFile) {
+      uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        overwrite: true,
+        public_id: path.parse(req.file.path).name,
+      });
+      await fs.unlink(req.file.path);
+    }
+
     const newOrder = await prisma.orders.create({
       data: {
-        userId: id,
-        total_price: totalPrice,
+        userId: +id,
+        total_price: parsedTotalPrice,
         paymentMethod: paymentMethod || "QRCODE",
-        paymentUrl: uploadResult.secure_url || "",
+        paymentUrl: uploadResult?.secure_url || "",
       },
     });
-    
-    // console.log(newOrder, "NEW ORDER")
+
     const rmKeyinCart = carts.map(({ id, user_id, products, ...rest }) => {
       rest.order_id = newOrder.id;
       return rest;
@@ -28,9 +40,10 @@ exports.addOrder = async (req, res, next) => {
     const allItem = await prisma.order_items.createMany({
       data: rmKeyinCart,
     });
-    res.json({ allItem });
+    res.json({ newOrder, allItem });
   } catch (err) {
     next(err);
+    console.error("Order creation error:", err);
   }
 };
 
@@ -45,6 +58,7 @@ exports.getOrder = async (req, res, next) => {
     res.json({ allOrder });
   } catch (err) {
     next(err);
+    console.log(err, "Error");
   }
 };
 
@@ -105,11 +119,10 @@ exports.confirmOrder = async (req, res, next) => {
       },
     });
 
-
     if (selectedOrder.status !== "PENDING") {
       return createError(400, "Status cannot be updated");
     }
-    
+
     const confirmedOrder = await prisma.orders.update({
       where: {
         id: Number(orderId),
